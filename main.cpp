@@ -1,6 +1,9 @@
 #include "main.h"
 #include "ACMMP.h"
 
+#include <chrono>
+#include <iostream>
+
 void GenerateSampleList(const std::string &dense_folder, std::vector<Problem> &problems)
 {
     std::string cluster_list_path = dense_folder + std::string("/pair.txt");
@@ -397,6 +400,8 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    auto start = std::chrono::steady_clock::now();
+
     std::string dense_folder = argv[1];
     std::vector<Problem> problems;
     GenerateSampleList(dense_folder, problems);
@@ -477,8 +482,15 @@ int main(int argc, char** argv)
         max_num_downscale--;
     }
 
+    auto end_dmaps = std::chrono::steady_clock::now();
+
     geom_consistency = true;
     RunFusion(dense_folder, problems, geom_consistency);
+
+    auto end_fusion = std::chrono::steady_clock::now();
+
+    std::cout << "Elapsed time depthmaps: " << std::chrono::duration<double>(end_dmaps - start).count() << " s" << std::endl;
+    std::cout << "Elapsed time fusion: " << std::chrono::duration<double>(end_fusion - end_dmaps).count() << " s" << std::endl;
 
     return 0;
 }
