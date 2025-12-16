@@ -35,11 +35,10 @@ void GenerateSampleList(const std::string &dense_folder, std::vector<Problem> &p
     }
 }
 
-int ComputeMultiScaleSettings(const std::string &dense_folder, std::vector<Problem> &problems)
+int ComputeMultiScaleSettings(const std::string &dense_folder, std::vector<Problem> &problems, float downscale_factor = 1.0f)
 {
     int max_num_downscale = -1;
     int size_bound = 1000;
-    PatchMatchParams pmp;
     std::string image_folder = dense_folder + std::string("/images");
 
     size_t num_images = problems.size();
@@ -51,10 +50,8 @@ int ComputeMultiScaleSettings(const std::string &dense_folder, std::vector<Probl
 
         int rows = image_uint.rows;
         int cols = image_uint.cols;
-        int max_size = std::max(rows, cols);
-        if (max_size > pmp.max_image_size) {
-            max_size = pmp.max_image_size;
-        }
+        int original_max_size = std::max(rows, cols);
+        int max_size = static_cast<int>(original_max_size / downscale_factor);
         problems[i].max_image_size = max_size;
 
         int k = 0;
@@ -396,13 +393,33 @@ void RunFusion(std::string &dense_folder, const std::vector<Problem> &problems, 
 int main(int argc, char** argv)
 {
     if (argc < 2) {
-        std::cout << "USAGE: ACMMP dense_folder" << std::endl;
+        std::cout << "USAGE: ACMMP dense_folder [--downscale <downscale_factor>]" << std::endl;
+        std::cout << "  dense_folder: path to the dense reconstruction folder" << std::endl;
+        std::cout << "  --downscale: optional downscaling factor for all images (default: 1.0, no scaling)" << std::endl;
+        std::cout << "               e.g., 2.0 halves image dimensions, 1.4 scales by ~0.714" << std::endl;
         return -1;
     }
 
     auto start = std::chrono::steady_clock::now();
 
     std::string dense_folder = argv[1];
+    float downscale_factor = 1.0f; // default value (no scaling)
+
+    // Parse optional arguments
+    for (int i = 2; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--downscale" && i + 1 < argc) {
+            downscale_factor = std::atof(argv[++i]);
+            if (downscale_factor <= 0.0f) {
+                std::cout << "Error: --downscale must be a positive number" << std::endl;
+                return -1;
+            }
+        } else {
+            std::cout << "Unknown argument: " << arg << std::endl;
+            std::cout << "USAGE: ACMMP dense_folder [--downscale <downscale_factor>]" << std::endl;
+            return -1;
+        }
+    }
     std::vector<Problem> problems;
     GenerateSampleList(dense_folder, problems);
 
@@ -413,7 +430,7 @@ int main(int argc, char** argv)
     size_t num_images = problems.size();
     std::cout << "There are " << num_images << " problems needed to be processed!" << std::endl;
 
-    int max_num_downscale = ComputeMultiScaleSettings(dense_folder, problems);
+    int max_num_downscale = ComputeMultiScaleSettings(dense_folder, problems, downscale_factor);
 
      int flag = 0;
      int geom_iterations = 2;
