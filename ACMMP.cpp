@@ -380,7 +380,7 @@ void StoreColorPlyFileBinaryPointCloud (const std::string &plyFilePath, const st
     /*write header*/
     fprintf(outputPly, "ply\n");
     fprintf(outputPly, "format binary_little_endian 1.0\n");
-    fprintf(outputPly, "element vertex %d\n",pc.size());
+    fprintf(outputPly, "element vertex %u\n", (unsigned int)pc.size());
     fprintf(outputPly, "property float x\n");
     fprintf(outputPly, "property float y\n");
     fprintf(outputPly, "property float z\n");
@@ -394,7 +394,7 @@ void StoreColorPlyFileBinaryPointCloud (const std::string &plyFilePath, const st
 
     //write data
 #pragma omp parallel for
-    for(size_t i = 0; i < pc.size(); i++) {
+    for(long long i = 0; i < (long long)pc.size(); i++) {
         const PointList &p = pc[i];
         float3 X = p.coord;
         const float3 normal = p.normal;
@@ -976,7 +976,7 @@ void RunJBU(const cv::Mat_<float>  &scaled_image_float, const cv::Mat_<float> &s
     std::stringstream result_path;
     result_path << dense_folder << "/ACMMP" << "/2333_" << std::setw(8) << std::setfill('0') << problem.ref_image_id;
     std::string result_folder = result_path.str();
-    mkdir(result_folder.c_str(), 0777);
+    CreateDirectoryA(result_folder.c_str(), NULL);
     std::string depth_path = result_folder + "/depths.dmb";
     writeDepthDmb ( depth_path, disp0 );
 

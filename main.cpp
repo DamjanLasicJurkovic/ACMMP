@@ -78,7 +78,8 @@ void ProcessProblem(const std::string &dense_folder, const std::vector<Problem> 
     std::stringstream result_path;
     result_path << dense_folder << "/ACMMP" << "/2333_" << std::setw(8) << std::setfill('0') << problem.ref_image_id;
     std::string result_folder = result_path.str();
-    mkdir(result_folder.c_str(), 0777);
+    CreateDirectoryA(result_folder.c_str(), NULL);
+    //mkdir(result_folder.c_str(), 0777);
 
     ACMMP acmmp;
     if (geom_consistency) {
@@ -401,7 +402,8 @@ int main(int argc, char** argv)
     GenerateSampleList(dense_folder, problems);
 
     std::string output_folder = dense_folder + std::string("/ACMMP");
-    mkdir(output_folder.c_str(), 0777);
+    CreateDirectory(output_folder.c_str(), NULL);
+    //mkdir(output_folder.c_str(), 0777);
 
     size_t num_images = problems.size();
     std::cout << "There are " << num_images << " problems needed to be processed!" << std::endl;

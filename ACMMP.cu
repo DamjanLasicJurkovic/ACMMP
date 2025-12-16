@@ -1,5 +1,8 @@
 #include "ACMMP.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #define mul4(v,k) { \
     v->x = v->x * k; \
     v->y = v->y * k; \

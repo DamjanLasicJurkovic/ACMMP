@@ -26,8 +26,17 @@
 #include <memory>
 #include "iomanip"
 
-#include <sys/stat.h> // mkdir
-#include <sys/types.h> // mkdir
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <windows.h>
+//#include <sys/stat.h> // mkdir
+//#include <sys/types.h> // mkdir
 
 #define MAX_IMAGES 256
 #define JBU_NUM 2

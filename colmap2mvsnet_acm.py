@@ -16,6 +16,11 @@ import argparse
 import shutil
 import cv2
 
+def patch_asscalar(a):
+    return a.item()
+
+setattr(np, "asscalar", patch_asscalar)
+
 #============================ read_model.py ============================#
 CameraModel = collections.namedtuple(
     "CameraModel", ["model_id", "model_name", "num_params"])
@@ -303,8 +308,10 @@ def calc_score(inputs, images, points3d, extrinsic, args):
 
 def processing_single_scene(args):
 
-    image_dir = os.path.join(args.dense_folder, 'images')
-    model_dir = os.path.join(args.dense_folder, 'sparse')
+    #image_dir = os.path.join(args.dense_folder, 'images')
+    #model_dir = os.path.join(args.dense_folder, 'sparse')
+    image_dir = args.dense_folder
+    model_dir = args.dense_folder
     cam_dir = os.path.join(args.save_folder, 'cams')
     image_converted_dir = os.path.join(args.save_folder, 'images')
 
