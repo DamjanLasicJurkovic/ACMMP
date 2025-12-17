@@ -35,14 +35,13 @@ void GenerateSampleList(const std::string &dense_folder, std::vector<Problem> &p
     }
 }
 
-int ComputeMultiScaleSettings(const std::string &dense_folder, std::vector<Problem> &problems, float downscale_factor = 1.0f)
+int ComputeMultiScaleSettings(const std::string &dense_folder, std::vector<Problem> &problems, float downscale_factor = 1.0f, int num_scales = 3)
 {
-    int max_num_downscale = -1;
-    int size_bound = 1000;
     std::string image_folder = dense_folder + std::string("/images");
 
     size_t num_images = problems.size();
 
+    // Set the same number of downscale levels for all images
     for (size_t i = 0; i < num_images; ++i) {
         std::stringstream image_path;
         image_path << image_folder << "/" << std::setw(8) << std::setfill('0') << problems[i].ref_image_id << ".jpg";
@@ -54,20 +53,11 @@ int ComputeMultiScaleSettings(const std::string &dense_folder, std::vector<Probl
         int max_size = static_cast<int>(original_max_size / downscale_factor);
         problems[i].max_image_size = max_size;
 
-        int k = 0;
-        while (max_size > size_bound) {
-            max_size /= 2;
-            k++;
-        }
-
-        if (k > max_num_downscale) {
-            max_num_downscale = k;
-        }
-
-        problems[i].num_downscale = k;
+        // All images use the same number of scale levels
+        problems[i].num_downscale = num_scales - 1; // Start from coarsest scale
     }
 
-    return max_num_downscale;
+    return num_scales - 1; // Return max_num_downscale (0-based index)
 }
 
 void ProcessProblem(const std::string &dense_folder, const std::vector<Problem> &problems, const int idx, bool geom_consistency, bool planar_prior, bool hierarchy, bool multi_geometrty=false)
@@ -393,10 +383,11 @@ void RunFusion(std::string &dense_folder, const std::vector<Problem> &problems, 
 int main(int argc, char** argv)
 {
     if (argc < 2) {
-        std::cout << "USAGE: ACMMP dense_folder [--downscale <downscale_factor>]" << std::endl;
+        std::cout << "USAGE: ACMMP dense_folder [--downscale <downscale_factor>] [--num-scales <num>]" << std::endl;
         std::cout << "  dense_folder: path to the dense reconstruction folder" << std::endl;
         std::cout << "  --downscale: optional downscaling factor for all images (default: 1.0, no scaling)" << std::endl;
         std::cout << "               e.g., 2.0 halves image dimensions, 1.4 scales by ~0.714" << std::endl;
+        std::cout << "  --num-scales: optional number of multiscale iterations (default: 3)" << std::endl;
         return -1;
     }
 
@@ -404,6 +395,7 @@ int main(int argc, char** argv)
 
     std::string dense_folder = argv[1];
     float downscale_factor = 1.0f; // default value (no scaling)
+    int num_scales = 3; // default value (3 scale levels)
 
     // Parse optional arguments
     for (int i = 2; i < argc; ++i) {
@@ -414,9 +406,15 @@ int main(int argc, char** argv)
                 std::cout << "Error: --downscale must be a positive number" << std::endl;
                 return -1;
             }
+        } else if (arg == "--num-scales" && i + 1 < argc) {
+            num_scales = std::atoi(argv[++i]);
+            if (num_scales <= 0) {
+                std::cout << "Error: --num-scales must be a positive integer" << std::endl;
+                return -1;
+            }
         } else {
             std::cout << "Unknown argument: " << arg << std::endl;
-            std::cout << "USAGE: ACMMP dense_folder [--downscale <downscale_factor>]" << std::endl;
+            std::cout << "USAGE: ACMMP dense_folder [--downscale <downscale_factor>] [--num-scales <num>]" << std::endl;
             return -1;
         }
     }
@@ -430,7 +428,7 @@ int main(int argc, char** argv)
     size_t num_images = problems.size();
     std::cout << "There are " << num_images << " problems needed to be processed!" << std::endl;
 
-    int max_num_downscale = ComputeMultiScaleSettings(dense_folder, problems, downscale_factor);
+    int max_num_downscale = ComputeMultiScaleSettings(dense_folder, problems, downscale_factor, num_scales);
 
      int flag = 0;
      int geom_iterations = 2;
