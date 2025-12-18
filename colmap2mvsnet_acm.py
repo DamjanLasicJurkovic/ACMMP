@@ -113,7 +113,6 @@ def read_cameras_binary(path_to_model_file):
         assert len(cameras) == num_cameras
     return cameras
 
-
 def read_images_text(path):
     """
     see: src/base/reconstruction.cc
@@ -137,6 +136,7 @@ def read_images_text(path):
                 elems = fid.readline().split()
                 xys = np.column_stack([tuple(map(float, elems[0::3])),
                                        tuple(map(float, elems[1::3]))])
+                xys -= 0.5 # COLMAP uses 0,0 for top left corner, we use 0,0 for top left pixel center
                 point3D_ids = np.array(tuple(map(int, elems[2::3])))
                 images[image_id] = Image(
                     id=image_id, qvec=qvec, tvec=tvec,
@@ -172,6 +172,7 @@ def read_images_binary(path_to_model_file):
                                        format_char_sequence="ddq"*num_points2D)
             xys = np.column_stack([tuple(map(float, x_y_id_s[0::3])),
                                    tuple(map(float, x_y_id_s[1::3]))])
+            xys -= 0.5 # COLMAP uses 0,0 for top left corner, we use 0,0 for top left pixel center
             point3D_ids = np.array(tuple(map(int, x_y_id_s[2::3])))
             images[image_id] = Image(
                 id=image_id, qvec=qvec, tvec=tvec,
@@ -341,8 +342,8 @@ def processing_single_scene(args):
             params_dict['fx'] = params_dict['f']
             params_dict['fy'] = params_dict['f']
         i = np.array([
-            [params_dict['fx'], 0, params_dict['cx']],
-            [0, params_dict['fy'], params_dict['cy']],
+            [params_dict['fx'], 0, params_dict['cx'] - 0.5], # COLMAP uses 0,0 for top left corner, we use 0,0 for top left pixel center
+            [0, params_dict['fy'], params_dict['cy'] - 0.5],
             [0, 0, 1]
         ])
         intrinsic[camera_id] = i
